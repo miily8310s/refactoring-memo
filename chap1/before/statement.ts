@@ -8,16 +8,16 @@ interface Invoice {
   performances: Performance[];
 }
 
-interface PlayData {
+interface Play {
   name: string;
   type: string;
 }
 
-interface Play {
-  [key: string]: PlayData;
+interface Plays {
+  [key: string]: Play;
 }
 
-function statement(invoice: Invoice, plays: Play) {
+function statement(invoice: Invoice, plays: Plays) {
   let totalAmount = 0;
   let volumeCredits = 0;
   let result = `Statement for ${invoice.customer}\n`;
