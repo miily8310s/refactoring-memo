@@ -17,29 +17,33 @@ interface Plays {
   [key: string]: Play;
 }
 
-function amountFor(performance: Performance, play: Play) {
-  let result = 0;
-  switch (play.type) {
-    case "tragedy":
-      result = 40000;
-      if (performance.audience > 30) {
-        result += 1000 * (performance.audience - 30);
-      }
-      break;
-    case "comedy":
-      result = 30000;
-      if (performance.audience > 20) {
-        result += 10000 + 500 * (performance.audience - 20);
-      }
-      result += 300 * performance.audience;
-      break;
-    default:
-      throw new Error(`unknown type: ${play.type}`);
-  }
-  return result;
-}
-
 export function statement(invoice: Invoice, plays: Plays) {
+  function playFor(performance: Performance) {
+    return plays[performance.playID];
+  }
+
+  function amountFor(performance: Performance) {
+    let result = 0;
+    switch (playFor(performance).type) {
+      case "tragedy":
+        result = 40000;
+        if (performance.audience > 30) {
+          result += 1000 * (performance.audience - 30);
+        }
+        break;
+      case "comedy":
+        result = 30000;
+        if (performance.audience > 20) {
+          result += 10000 + 500 * (performance.audience - 20);
+        }
+        result += 300 * performance.audience;
+        break;
+      default:
+        throw new Error(`unknown type: ${playFor(performance).type}`);
+    }
+    return result;
+  }
+
   let totalAmount = 0;
   let volumeCredits = 0;
   let result = `Statement for ${invoice.customer}\n`;
@@ -51,16 +55,14 @@ export function statement(invoice: Invoice, plays: Plays) {
   }).format;
 
   for (const [_key, performance] of Object.entries(invoice.performances)) {
-    const play = plays[performance.playID];
-    const thisAmount = amountFor(performance, play);
     volumeCredits += Math.max(performance.audience - 30, 0);
-    if ("comedy" === play.type) {
+    if ("comedy" === playFor(performance).type) {
       volumeCredits += Math.floor(performance.audience / 5);
     }
-    result += `  ${play.name}: ${format(thisAmount / 100)} (${
-      performance.audience
-    } seats)\n`;
-    totalAmount += thisAmount;
+    result += `  ${playFor(performance).name}: ${format(
+      amountFor(performance) / 100
+    )} (${performance.audience} seats)\n`;
+    totalAmount += amountFor(performance);
   }
   result += `Amount owed is ${format(totalAmount / 100)}\n`;
   result += `You earned ${volumeCredits} credits\n`;
