@@ -3,9 +3,9 @@ interface Performance {
   audience: number;
 }
 
-interface Invoice {
+interface Invoice<T> {
   customer: string;
-  performances: Performance[];
+  performances: T[];
 }
 
 interface Play {
@@ -17,14 +17,42 @@ interface Plays {
   [key: string]: Play;
 }
 
-export function statement(invoice: Invoice, plays: Plays) {
+interface PerformancePlay extends Performance {
+  play: Play;
+}
+
+export function statement(invoice: Invoice<Performance>, plays: Plays) {
+  const statementData = {
+    customer: invoice.customer,
+    performances: invoice.performances.map(enrichPerformance),
+  };
+  return renderPlainText(statementData);
+
+  function enrichPerformance(aPerformance: Performance) {
+    const performance = Object.assign({}, aPerformance);
+    return { ...performance, play: playFor(performance) };
+  }
   function playFor(performance: Performance) {
     return plays[performance.playID];
   }
+}
 
-  function amountFor(performance: Performance) {
+function renderPlainText(data: Invoice<PerformancePlay>) {
+  let result = `Statement for ${data.customer}\n`;
+
+  for (const [_key, performance] of Object.entries(data.performances)) {
+    result += `  ${performance.play.name}: ${usd(
+      amountFor(performance) / 100
+    )} (${performance.audience} seats)\n`;
+  }
+
+  result += `Amount owed is ${usd(appleSauce() / 100)}\n`;
+  result += `You earned ${totalVolumeCredits()} credits\n`;
+  return result;
+
+  function amountFor(performance: PerformancePlay) {
     let result = 0;
-    switch (playFor(performance).type) {
+    switch (performance.play.type) {
       case "tragedy":
         result = 40000;
         if (performance.audience > 30) {
@@ -39,15 +67,15 @@ export function statement(invoice: Invoice, plays: Plays) {
         result += 300 * performance.audience;
         break;
       default:
-        throw new Error(`unknown type: ${playFor(performance).type}`);
+        throw new Error(`unknown type: ${performance.play.type}`);
     }
     return result;
   }
 
-  function volumeCreditsFor(performance: Performance) {
+  function volumeCreditsFor(performance: PerformancePlay) {
     let result = 0;
     result += Math.max(performance.audience - 30, 0);
-    if ("comedy" === playFor(performance).type) {
+    if ("comedy" === performance.play.type) {
       result += Math.floor(performance.audience / 5);
     }
     return result;
@@ -63,7 +91,7 @@ export function statement(invoice: Invoice, plays: Plays) {
 
   function totalVolumeCredits() {
     let result = 0;
-    for (const [_key, performance] of Object.entries(invoice.performances)) {
+    for (const [_key, performance] of Object.entries(data.performances)) {
       result += volumeCreditsFor(performance);
     }
     return result;
@@ -71,23 +99,11 @@ export function statement(invoice: Invoice, plays: Plays) {
 
   function appleSauce() {
     let result = 0;
-    for (const [_key, performance] of Object.entries(invoice.performances)) {
+    for (const [_key, performance] of Object.entries(data.performances)) {
       result += amountFor(performance);
     }
     return result;
   }
-
-  let result = `Statement for ${invoice.customer}\n`;
-
-  for (const [_key, performance] of Object.entries(invoice.performances)) {
-    result += `  ${playFor(performance).name}: ${usd(
-      amountFor(performance) / 100
-    )} (${performance.audience} seats)\n`;
-  }
-
-  result += `Amount owed is ${usd(appleSauce() / 100)}\n`;
-  result += `You earned ${totalVolumeCredits()} credits\n`;
-  return result;
 }
 
 // Use deno run --allow-read abc.ts
