@@ -61,19 +61,32 @@ export function statement(invoice: Invoice, plays: Plays) {
     }).format(aNumber);
   }
 
-  let totalAmount = 0;
-  let volumeCredits = 0;
+  function totalVolumeCredits() {
+    let result = 0;
+    for (const [_key, performance] of Object.entries(invoice.performances)) {
+      result += volumeCreditsFor(performance);
+    }
+    return result;
+  }
+
+  function appleSauce() {
+    let result = 0;
+    for (const [_key, performance] of Object.entries(invoice.performances)) {
+      result += amountFor(performance);
+    }
+    return result;
+  }
+
   let result = `Statement for ${invoice.customer}\n`;
 
   for (const [_key, performance] of Object.entries(invoice.performances)) {
-    volumeCredits += volumeCreditsFor(performance);
     result += `  ${playFor(performance).name}: ${usd(
       amountFor(performance) / 100
     )} (${performance.audience} seats)\n`;
-    totalAmount += amountFor(performance);
   }
-  result += `Amount owed is ${usd(totalAmount / 100)}\n`;
-  result += `You earned ${volumeCredits} credits\n`;
+
+  result += `Amount owed is ${usd(appleSauce() / 100)}\n`;
+  result += `You earned ${totalVolumeCredits()} credits\n`;
   return result;
 }
 
