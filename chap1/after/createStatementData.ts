@@ -20,9 +20,9 @@ export function createStatementData(
       playFor(aPerformance)
     );
     const performance = Object.assign({}, aPerformance);
-    const result = { ...performance, play: simulator.play };
     return {
-      ...result,
+      ...performance,
+      play: simulator.play,
       amount: simulator.amount,
       volumeCredits: simulator.volumeCredits,
     };
@@ -67,29 +67,26 @@ class PerformanceSimulator {
     return 0;
   }
   get volumeCredits() {
-    let result = 0;
-    result += Math.max(this.performance.audience - 30, 0);
-    return result;
+    return Math.max(this.performance.audience - 30, 0);
   }
 }
 
 class TragedyCalculator extends PerformanceSimulator {
   get amount() {
-    let result = 40000;
+    const TRAGEDY_MONEY = 40000;
     if (this.performance.audience > 30) {
-      result += 1000 * (this.performance.audience - 30);
+      return TRAGEDY_MONEY + 1000 * (this.performance.audience - 30);
     }
-    return result;
+    return TRAGEDY_MONEY;
   }
 }
 class ComedyCalculator extends PerformanceSimulator {
   get amount() {
-    let result = 30000;
+    const COMEDY_MONEY = 30000 + 300 * this.performance.audience;
     if (this.performance.audience > 20) {
-      result += 10000 + 500 * (this.performance.audience - 20);
+      return COMEDY_MONEY + 10000 + 500 * (this.performance.audience - 20);
     }
-    result += 300 * this.performance.audience;
-    return result;
+    return COMEDY_MONEY;
   }
   get volumeCredits() {
     return super.volumeCredits + Math.floor(this.performance.audience / 5);
