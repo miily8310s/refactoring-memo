@@ -23,16 +23,22 @@ interface PerformancePlay extends Performance {
 }
 
 export function statement(invoice: Invoice<Performance>, plays: Plays) {
+  return renderPlainText(createStatementData(invoice, plays));
+}
+
+export function createStatementData(
+  invoice: Invoice<Performance>,
+  plays: Plays
+) {
   const result = {
     customer: invoice.customer,
     performances: invoice.performances.map(enrichPerformance),
   };
-  const statementData = {
+  return {
     ...result,
     totalAmount: totalAmount(result),
     totalVolumeCredits: totalVolumeCredits(result),
   };
-  return renderPlainText(statementData);
 
   function enrichPerformance(aPerformance: Performance) {
     const performance = Object.assign({}, aPerformance);
