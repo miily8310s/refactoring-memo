@@ -76,19 +76,17 @@ export function statement(invoice: Invoice<Performance>, plays: Plays) {
     return result;
   }
   function totalVolumeCredits(data: Invoice<PerformancePlay>) {
-    let result = 0;
-    for (const [_key, performance] of Object.entries(data.performances)) {
-      result += performance.volumeCredits;
-    }
-    return result;
+    return Object.values(data.performances).reduce(
+      (total, performance) => total + performance.volumeCredits,
+      0
+    );
   }
 
   function totalAmount(data: Invoice<PerformancePlay>) {
-    let result = 0;
-    for (const [_key, performance] of Object.entries(data.performances)) {
-      result += performance.amount;
-    }
-    return result;
+    return Object.values(data.performances).reduce(
+      (total, performance) => total + performance.amount,
+      0
+    );
   }
 }
 
